@@ -9,11 +9,12 @@ use Filament\Panel;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Laravel\Sanctum\HasApiTokens;
+use Spatie\Permission\Traits\HasRoles;
 
 class User extends Authenticatable implements FilamentUser, HasName
 {
-    /** @use HasFactory<\Database\Factories\UserFactory> */
-    use HasFactory, Notifiable;
+    use HasApiTokens, HasFactory, Notifiable, HasRoles;
 
     /**
      * The attributes that are mass assignable.
@@ -88,5 +89,45 @@ class User extends Authenticatable implements FilamentUser, HasName
     public function getFilamentName(): string
     {
         return "{$this->firstname} {$this->lastname}";
+    }
+
+    public function reports()
+    {
+        return $this->hasMany(Report::class, 'userId');
+    }
+
+    public function isLawyer(): bool
+    {
+        return $this->role === 'lawyer';
+    }
+
+    public function isAssistant(): bool
+    {
+        return $this->role === 'assistant';
+    }
+
+    public function canCreateReports(): bool
+    {
+        return $this->isLawyer();
+    }
+
+    public function canEditReports(): bool
+    {
+        return true;
+    }
+
+    public function canDeleteReports(): bool
+    {
+        return $this->isLawyer();
+    }
+
+    public function canViewReports(): bool
+    {
+        return true;
+    }
+
+    public function canExportReports(): bool
+    {
+        return $this->isLawyer();
     }
 }

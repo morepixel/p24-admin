@@ -32,7 +32,7 @@ return new class extends Migration
             $table->double('lat');
             $table->double('lng');
             $table->bigInteger('order')->default(0);
-            $table->foreignId('userId')->constrained('users');
+            $table->bigInteger('userId')->nullable();
             $table->bigInteger('addressId')->default(0);
             $table->string('lawyerDetails', 2000)->nullable();
             $table->string('halterDatum', 128)->nullable();

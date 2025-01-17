@@ -11,6 +11,7 @@ use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 use Illuminate\Support\Facades\Auth;
+use App\Filament\Resources\ReportResource\Pages;
 
 class ReportResource extends Resource
 {
@@ -21,6 +22,10 @@ class ReportResource extends Resource
     protected static ?string $navigationGroup = 'Vorgänge';
 
     protected static ?string $navigationLabel = 'Vorgänge';
+
+    protected static ?string $modelLabel = 'Vorgang';
+
+    protected static ?string $pluralModelLabel = 'Vorgänge';
 
     public static function form(Form $form): Form
     {
@@ -176,12 +181,12 @@ class ReportResource extends Resource
         ];
     }
 
-    protected static function getNavigationBadge(): ?string
+    public static function getNavigationBadge(): ?string
     {
         return static::getModel()::where('status', 0)->count();
     }
 
-    protected static function getNavigationBadgeColor(): string|array|null
+    public static function getNavigationBadgeColor(): string|array|null
     {
         return 'warning';
     }

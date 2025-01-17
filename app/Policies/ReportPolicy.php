@@ -12,31 +12,31 @@ class ReportPolicy
 
     public function viewAny(User $user): bool
     {
-        return true; // Beide Rollen können Reports sehen
+        return $user->canViewReports();
     }
 
     public function view(User $user, Report $report): bool
     {
-        return true; // Beide Rollen können Reports im Detail sehen
+        return $user->canViewReports();
     }
 
     public function create(User $user): bool
     {
-        return $user->role === 'lawyer'; // Nur Anwälte können Reports erstellen
+        return $user->canCreateReports();
     }
 
     public function update(User $user, Report $report): bool
     {
-        if ($user->role === 'lawyer') {
-            return true; // Anwälte können alle Reports bearbeiten
-        }
-
-        // Sachbearbeiter können nur bestimmte Felder bearbeiten
-        return $user->role === 'assistant';
+        return $user->canEditReports();
     }
 
     public function delete(User $user, Report $report): bool
     {
-        return $user->role === 'lawyer'; // Nur Anwälte können Reports löschen
+        return $user->canDeleteReports();
+    }
+
+    public function export(User $user): bool
+    {
+        return $user->canExportReports();
     }
 }
