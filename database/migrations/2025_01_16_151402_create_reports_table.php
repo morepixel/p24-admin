@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::create('reports', function (Blueprint $table) {
             $table->id();
-            $table->string('companyName', 128);
+            $table->string('companyName', 128)->default('');
             $table->string('firstname');
             $table->string('lastname');
             $table->string('email');
@@ -41,8 +41,24 @@ return new class extends Migration
             $table->string('kennnummer', 128)->nullable();
             $table->string('halterPLZ', 128)->nullable();
             $table->string('halterOrt', 128)->nullable();
+            $table->string('halterStrasse')->nullable();
+            $table->string('kbaFile')->nullable();
+            $table->boolean('paymentStatus')->default(false);
+            $table->boolean('adminEmailSent')->default(false);
+            $table->string('fahrerName')->nullable();
+            $table->string('fahrerOrt')->nullable();
+            $table->string('fahrerPLZ')->nullable();
+            $table->string('fahrerStrasse')->nullable();
+            $table->string('fahrerGeschlecht')->nullable();
+            $table->string('halterGeschlecht')->nullable();
+            $table->string('mandantGeschlecht')->nullable();
+            $table->text('notes')->nullable();
+            $table->string('ueFIle')->nullable();
+            $table->timestamp('ueFileUploadedAt')->nullable();
+            $table->text('reportResponse')->nullable();
+            $table->boolean('paidKBA')->default(false);
+            $table->integer('lawyerApprovalStatus')->default(0);
             $table->timestamps();
-            $table->softDeletes();
         });
     }
 

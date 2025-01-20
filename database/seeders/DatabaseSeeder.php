@@ -3,10 +3,7 @@
 namespace Database\Seeders;
 
 use App\Models\User;
-// use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
-use Database\Seeders\RoleSeeder;
-use Database\Seeders\ImportReportsSeeder;
 
 class DatabaseSeeder extends Seeder
 {
@@ -15,23 +12,19 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        User::create([
-            'firstname' => 'Test',
-            'lastname' => 'User',
-            'email' => 'test@example.com',
-            'password' => bcrypt('password'),
-            'role' => 'admin',
-            'language' => 'de',
-            'street' => 'Test Street 1',
-            'zip' => '12345',
-            'city' => 'Test City',
-            'country' => 'Deutschland',
-            'companyName' => 'Test Company',
-        ]);
+        // First create roles
+        $this->call(RoleSeeder::class);
 
-        $this->call([
-            RoleSeeder::class,
-            ImportReportsSeeder::class,
-        ]);
+        // Create test user
+        $this->call(CreateTestUserSeeder::class);
+
+        // Import users first as they are referenced by other tables
+        $this->call(ImportUsersSeeder::class);
+
+        // Import addresses which might reference users
+        $this->call(ImportAddressesSeeder::class);
+
+        // Import reports last as they might reference both users and addresses
+        $this->call(ProcessReportsSeeder::class);
     }
 }

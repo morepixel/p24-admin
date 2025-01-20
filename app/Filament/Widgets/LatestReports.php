@@ -40,13 +40,16 @@ class LatestReports extends BaseWidget
                         '1' => 'warning',
                         '2' => 'success',
                         '3' => 'danger',
+                        '18' => 'danger',
+                        default => 'gray',
                     })
                     ->formatStateUsing(fn (string $state): string => match ($state) {
                         '0' => 'Neu',
                         '1' => 'In Bearbeitung',
                         '2' => 'Abgeschlossen',
                         '3' => 'Storniert',
-                        default => $state,
+                        '18' => 'Gelöscht',
+                        default => "Status {$state}",
                     }),
             ])
             ->actions([

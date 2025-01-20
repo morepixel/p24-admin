@@ -2,12 +2,18 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Report extends Model
 {
+    use HasFactory;
     use SoftDeletes;
+
+    protected $table = 'reports';
+
+    public $timestamps = true;
 
     protected $fillable = [
         'companyName',
@@ -38,30 +44,35 @@ class Report extends Model
         'kennnummer',
         'halterPLZ',
         'halterOrt',
-    ];
-
-    protected $attributes = [
-        'order' => 0,
-        'uploadStatus' => 1,
-        'status' => 0,
-        'sentStatus' => 0,
-        'alreadyInSystem' => 0,
+        'halterStrasse',
+        'kbaFile',
+        'paymentStatus',
+        'adminEmailSent',
+        'fahrerName',
+        'fahrerOrt',
+        'fahrerPLZ',
+        'fahrerStrasse',
+        'fahrerGeschlecht',
+        'halterGeschlecht',
+        'mandantGeschlecht',
+        'notes',
+        'ueFIle',
+        'ueFileUploadedAt',
+        'reportResponse',
+        'paidKBA',
+        'lawyerApprovalStatus',
     ];
 
     protected $casts = [
         'date' => 'datetime',
-        'uploadStatus' => 'integer',
+        'ueFileUploadedAt' => 'datetime',
+        'paymentStatus' => 'boolean',
+        'adminEmailSent' => 'boolean',
+        'paidKBA' => 'boolean',
+        'created_at' => 'datetime',
+        'updated_at' => 'datetime',
+        'deleted_at' => 'datetime',
         'status' => 'integer',
-        'sentStatus' => 'integer',
-        'alreadyInSystem' => 'integer',
-        'lat' => 'double',
-        'lng' => 'double',
-        'order' => 'integer',
-        'userId' => 'integer',
-        'addressId' => 'integer',
-        'createdAt' => 'datetime',
-        'updatedAt' => 'datetime',
-        'deletedAt' => 'datetime',
     ];
 
     public function user()
