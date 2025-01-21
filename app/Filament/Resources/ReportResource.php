@@ -9,6 +9,7 @@ use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
+use Filament\Forms\Components\Card;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
@@ -312,7 +313,7 @@ class ReportResource extends Resource
                     ])
                     ->columnSpan(['lg' => 3]),
 
-                Forms\Components\Group::make()
+                Card::make()
                     ->schema([
                         Forms\Components\Section::make('Status')
                             ->schema([
@@ -350,13 +351,12 @@ class ReportResource extends Resource
                                         ->modalCancelActionLabel('Abbrechen')
                                         ->color('warning')
                                         ->icon('heroicon-o-exclamation-triangle')
-                                        ->action(function () {
-                                            // Logik für Abmahnung
-                                        }),
+                                        ->url(fn (Report $record): string => route('report.generateWarningPDF', ['id' => $record->id]))
+                                        ->openUrlInNewTab(),
                                     Forms\Components\Actions\Action::make('firstReminder')
                                         ->label('Erste Mahnung schicken')
                                         ->modalHeading('Erste Mahnung schicken')
-                                        ->modalDescription('Sind Sie sicher, dass Sie die erste Mahnung schicken möchten?')
+                                        ->modalDescription('Sind Sie sicher, dass Sie eine erste Mahnung schicken möchten?')
                                         ->modalSubmitActionLabel('Ja, erste Mahnung schicken')
                                         ->modalCancelActionLabel('Abbrechen')
                                         ->color('warning')
@@ -367,15 +367,37 @@ class ReportResource extends Resource
                                     Forms\Components\Actions\Action::make('secondReminder')
                                         ->label('Zweite Mahnung schicken')
                                         ->modalHeading('Zweite Mahnung schicken')
-                                        ->modalDescription('Sind Sie sicher, dass Sie die zweite Mahnung schicken möchten?')
+                                        ->modalDescription('Sind Sie sicher, dass Sie eine zweite Mahnung schicken möchten?')
                                         ->modalSubmitActionLabel('Ja, zweite Mahnung schicken')
                                         ->modalCancelActionLabel('Abbrechen')
-                                        ->color('danger')
+                                        ->color('warning')
                                         ->icon('heroicon-o-exclamation-triangle')
                                         ->action(function () {
                                             // Logik für zweite Mahnung
                                         }),
                                 ]),
+                            ]),
+
+                        Forms\Components\Section::make('Unterlassungserklärung')
+                            ->schema([
+                                Forms\Components\Group::make([
+                                    Forms\Components\ViewField::make('ueFile')
+                                        ->label('Unterlassungserklärung')
+                                        ->view('filament.resources.report-resource.fields.file-link'),
+                                    Forms\Components\FileUpload::make('ueFile')
+                                        ->label('Unterlassungserklärung hochladen')
+                                        ->visible(fn ($record) => empty($record->ueFile))
+                                        ->directory('ue-files')
+                                        ->preserveFilenames()
+                                        ->acceptedFileTypes(['application/pdf']),
+                                ]),
+                            ]),
+
+                        Forms\Components\Section::make('Vollmacht')
+                            ->schema([
+                                Forms\Components\ViewField::make('address.poaFile')
+                                    ->label('Vollmacht')
+                                    ->view('filament.resources.report-resource.fields.file-link'),
                             ]),
                     ])
                     ->columnSpan(['lg' => 1]),
@@ -470,7 +492,8 @@ class ReportResource extends Resource
                 Tables\Filters\TrashedFilter::make(),
             ])
             ->actions([
-                Tables\Actions\EditAction::make(),
+                Tables\Actions\ViewAction::make(),
+                Tables\Actions\EditAction::make()->url(fn (Report $record): string => route('filament.resources.reports.edit', $record)),
                 Tables\Actions\Action::make('stornieren')
                     ->label('Stornieren')
                     ->icon('heroicon-o-x-circle')
@@ -484,14 +507,7 @@ class ReportResource extends Resource
                     ->visible(fn (Report $record): bool => $record->status != 19),
             ])
             ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
-                    Tables\Actions\ForceDeleteBulkAction::make(),
-                    Tables\Actions\RestoreBulkAction::make(),
-                ]),
-            ])
-            ->emptyStateActions([
-                Tables\Actions\CreateAction::make(),
+                Tables\Actions\DeleteBulkAction::make(),
             ]);
     }
 

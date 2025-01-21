@@ -39,3 +39,5 @@ Route::get('/test-login', function() {
         'would_validate' => $user ? $user->validateCredentials($credentials) : 'no user',
     ]);
 });
+
+Route::get('/report/{id}/generate-warning-pdf', [App\Http\Controllers\ReportController::class, 'generateWarningPDF'])->name('report.generateWarningPDF');
