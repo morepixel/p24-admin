@@ -4,8 +4,10 @@ namespace App\Providers;
 
 use App\Models\Report;
 use App\Policies\ReportPolicy;
+use App\Auth\Md5PasswordHasher;
 use Illuminate\Foundation\Support\Providers\AuthServiceProvider as ServiceProvider;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Hash;
 
 class AuthServiceProvider extends ServiceProvider
 {
@@ -17,6 +19,16 @@ class AuthServiceProvider extends ServiceProvider
     protected $policies = [
         Report::class => ReportPolicy::class,
     ];
+
+    /**
+     * Register any authentication / authorization services.
+     */
+    public function register(): void
+    {
+        Hash::extend('md5', function () {
+            return new Md5PasswordHasher();
+        });
+    }
 
     /**
      * Register any authentication / authorization services.

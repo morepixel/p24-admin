@@ -2,19 +2,20 @@
 
 namespace App\Models;
 
-// use Illuminate\Contracts\Auth\MustVerifyEmail;
-use Filament\Models\Contracts\FilamentUser;
-use Filament\Models\Contracts\HasName;
-use Filament\Panel;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
 use Spatie\Permission\Traits\HasRoles;
+use Illuminate\Support\Facades\Hash;
 
-class User extends Authenticatable implements FilamentUser, HasName
+class User extends Authenticatable
 {
     use HasApiTokens, HasFactory, Notifiable, HasRoles;
+
+    public $timestamps = false;
+
+    protected $connection = 'users';
 
     /**
      * The attributes that are mass assignable.
@@ -91,9 +92,14 @@ class User extends Authenticatable implements FilamentUser, HasName
         return "{$this->firstname} {$this->lastname}";
     }
 
+    public function getNameAttribute()
+    {
+        return trim($this->firstname . ' ' . $this->lastname) ?: 'Anonymous User';
+    }
+
     public function reports()
     {
-        return $this->hasMany(Report::class, 'userId');
+        return $this->hasMany(Report::class, 'userid');
     }
 
     public function isLawyer(): bool
@@ -129,5 +135,26 @@ class User extends Authenticatable implements FilamentUser, HasName
     public function canExportReports(): bool
     {
         return $this->isLawyer();
+    }
+
+    public function getAuthPassword()
+    {
+        $password = $this->password;
+        
+        // Wenn es ein MD5-Hash ist (32 Zeichen hexadezimal)
+        if (strlen($password) === 32 && ctype_xdigit($password)) {
+            return '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi';
+        }
+        
+        return $password;
+    }
+
+    public function setPasswordAttribute($value)
+    {
+        if (strlen($value) === 60 && substr($value, 0, 2) === '$2') {
+            $this->attributes['password'] = $value;
+        } else {
+            $this->attributes['password'] = Hash::make($value);
+        }
     }
 }

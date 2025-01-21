@@ -11,21 +11,21 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('users', function (Blueprint $table) {
+        Schema::connection('users')->create('users', function (Blueprint $table) {
             $table->id();
-            $table->string('firstname');
-            $table->string('lastname');
+            $table->string('firstname')->nullable();
+            $table->string('lastname')->nullable();
             $table->string('email')->unique();
-            $table->string('role');
+            $table->string('role')->nullable();
             $table->string('password');
-            $table->string('language');
+            $table->string('language')->nullable();
             $table->string('emailCode')->nullable();
             $table->boolean('confirmed')->default(false);
-            $table->string('street');
-            $table->string('zip');
-            $table->string('city');
-            $table->string('country');
-            $table->string('companyName');
+            $table->string('street')->nullable();
+            $table->string('zip')->nullable();
+            $table->string('city')->nullable();
+            $table->string('country')->nullable();
+            $table->string('companyName')->nullable();
             $table->string('companyForm')->nullable();
             $table->string('companyOfficer')->nullable();
             $table->string('companyNumber')->nullable();
@@ -45,13 +45,13 @@ return new class extends Migration
             $table->softDeletes();
         });
 
-        Schema::create('password_reset_tokens', function (Blueprint $table) {
+        Schema::connection('users')->create('password_reset_tokens', function (Blueprint $table) {
             $table->string('email')->primary();
             $table->string('token');
             $table->timestamp('created_at')->nullable();
         });
 
-        Schema::create('sessions', function (Blueprint $table) {
+        Schema::connection('users')->create('sessions', function (Blueprint $table) {
             $table->string('id')->primary();
             $table->foreignId('user_id')->nullable()->index();
             $table->string('ip_address', 45)->nullable();
@@ -66,8 +66,8 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('users');
-        Schema::dropIfExists('password_reset_tokens');
-        Schema::dropIfExists('sessions');
+        Schema::connection('users')->dropIfExists('users');
+        Schema::connection('users')->dropIfExists('password_reset_tokens');
+        Schema::connection('users')->dropIfExists('sessions');
     }
 };

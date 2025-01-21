@@ -18,12 +18,12 @@ class ReportStats extends BaseWidget
                 ->descriptionIcon('heroicon-m-document-text')
                 ->color('success'),
             
-            Stat::make('Offene Vorgänge', Report::where('status', 'offen')->count())
+            Stat::make('Neue Vorgänge', Report::where('status', 0)->count())
                 ->description('Noch nicht bearbeitet')
                 ->descriptionIcon('heroicon-m-clock')
                 ->color('warning'),
             
-            Stat::make('Abgeschlossene Vorgänge', Report::where('status', 'abgeschlossen')->count())
+            Stat::make('Abgeschlossene Vorgänge', Report::where('status', 2)->count())
                 ->description('Erfolgreich bearbeitet')
                 ->descriptionIcon('heroicon-m-check-circle')
                 ->color('success'),

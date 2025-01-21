@@ -7,6 +7,7 @@ use Filament\Widgets\ChartWidget;
 use Flowframe\Trend\Trend;
 use Flowframe\Trend\TrendValue;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\DB;
 
 class ReportChart extends ChartWidget
 {
@@ -14,13 +15,23 @@ class ReportChart extends ChartWidget
 
     protected function getData(): array
     {
-        $data = Trend::model(Report::class)
-            ->between(
-                start: now()->startOfYear(),
-                end: now()->endOfYear(),
-            )
-            ->perMonth()
-            ->count();
+        $data = DB::connection('reports')
+            ->table('reports')
+            ->selectRaw('DATE_FORMAT(createdAt, "%Y-%m") as date, COUNT(*) as aggregate')
+            ->whereNull('deleted_at')
+            ->whereBetween('createdAt', [
+                now()->startOfYear(),
+                now()->endOfYear(),
+            ])
+            ->groupByRaw('DATE_FORMAT(createdAt, "%Y-%m")')
+            ->orderBy('date')
+            ->get()
+            ->map(function ($row) {
+                return new TrendValue(
+                    date: $row->date,
+                    aggregate: $row->aggregate
+                );
+            });
 
         return [
             'datasets' => [
@@ -29,7 +40,7 @@ class ReportChart extends ChartWidget
                     'data' => $data->map(fn (TrendValue $value) => $value->aggregate),
                 ],
             ],
-            'labels' => $data->map(fn (TrendValue $value) => Carbon::parse($value->date)->format('M')),
+            'labels' => $data->map(fn (TrendValue $value) => Carbon::createFromFormat('Y-m', $value->date)->format('M')),
         ];
     }
 

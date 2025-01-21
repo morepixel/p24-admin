@@ -18,19 +18,18 @@ class LatestReports extends BaseWidget
         return $table
             ->query(
                 Report::query()
-                    ->latest()
+                    ->orderBy('createdAt', 'desc')
                     ->limit(5)
             )
             ->columns([
                 Tables\Columns\TextColumn::make('companyName')
                     ->label('Firmenname')
                     ->searchable(),
-                Tables\Columns\TextColumn::make('plateCode1')
-                    ->label('Kennzeichen')
-                    ->searchable(),
-                Tables\Columns\TextColumn::make('date')
-                    ->label('Datum')
-                    ->dateTime()
+                Tables\Columns\TextColumn::make('fullPlateCode')
+                    ->label('Kennzeichen'),
+                Tables\Columns\TextColumn::make('createdAt')
+                    ->label('Erstellt')
+                    ->date('d.m.Y')
                     ->sortable(),
                 Tables\Columns\TextColumn::make('status')
                     ->label('Status')
