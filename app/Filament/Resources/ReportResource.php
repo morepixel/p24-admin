@@ -264,6 +264,20 @@ class ReportResource extends Resource
                 Tables\Columns\TextColumn::make('id')
                     ->label('ID')
                     ->sortable(),
+                Tables\Columns\TextColumn::make('kennzeichen')
+                    ->label('Kennzeichen')
+                    ->state(function ($record): string {
+                        return trim(implode('-', array_filter([
+                            $record->plateCode1,
+                            $record->plateCode2,
+                            $record->plateCode3
+                        ])));
+                    })
+                    ->searchable(query: function (Builder $query, string $search): Builder {
+                        return $query->where('plateCode1', 'like', "%{$search}%")
+                            ->orWhere('plateCode2', 'like', "%{$search}%")
+                            ->orWhere('plateCode3', 'like', "%{$search}%");
+                    }),
                 Tables\Columns\TextColumn::make('companyName')
                     ->label('Firmenname')
                     ->searchable(),
