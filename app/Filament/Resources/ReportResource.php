@@ -13,12 +13,13 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 use Illuminate\Support\Facades\Auth;
 use App\Filament\Resources\ReportResource\Pages;
+use Filament\Navigation\NavigationItem;
 
 class ReportResource extends Resource
 {
     protected static ?string $model = Report::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-document-text';
+    protected static ?string $navigationIcon = 'heroicon-o-document';
 
     protected static ?string $navigationLabel = 'Vorgänge';
 
@@ -35,10 +36,45 @@ class ReportResource extends Resource
         return null;
     }
 
+    public static function getNavigationItems(): array
+    {
+        return [
+            NavigationItem::make('Alle Vorgänge')
+                ->icon('heroicon-o-document')
+                ->isActiveWhen(fn (): bool => request()->routeIs('filament.admin.resources.reports.index'))
+                ->url(static::getUrl()),
+            NavigationItem::make('Neue Vorgänge')
+                ->icon('heroicon-o-plus')
+                ->badge(static::getModel()::where('status', 0)->count(), color: 'gray')
+                ->url(static::getUrl('new')),
+            NavigationItem::make('In Bearbeitung')
+                ->icon('heroicon-o-arrow-path')
+                ->badge(static::getModel()::where('status', 1)->count(), color: 'warning')
+                ->url(static::getUrl('inProgress')),
+            NavigationItem::make('Abgeschlossen')
+                ->icon('heroicon-o-check')
+                ->badge(static::getModel()::where('status', 2)->count(), color: 'success')
+                ->url(static::getUrl('completed')),
+            NavigationItem::make('Storniert')
+                ->icon('heroicon-o-x-mark')
+                ->badge(static::getModel()::where('status', 3)->count(), color: 'danger')
+                ->url(static::getUrl('canceled')),
+            NavigationItem::make('Gelöscht')
+                ->icon('heroicon-o-trash')
+                ->badge(static::getModel()::where('status', 18)->count(), color: 'danger')
+                ->url(static::getUrl('deleted')),
+        ];
+    }
+
     public static function getPages(): array
     {
         return [
             'index' => Pages\ListReports::route('/'),
+            'new' => Pages\ListNewReports::route('/new'),
+            'inProgress' => Pages\ListInProgressReports::route('/in-progress'),
+            'completed' => Pages\ListCompletedReports::route('/completed'),
+            'canceled' => Pages\ListCanceledReports::route('/canceled'),
+            'deleted' => Pages\ListDeletedReports::route('/deleted'),
             'edit' => Pages\EditReport::route('/{record}/edit'),
             'create' => Pages\CreateReport::route('/create'),
         ];
