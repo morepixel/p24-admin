@@ -40,4 +40,7 @@ Route::get('/test-login', function() {
     ]);
 });
 
-Route::get('/report/{id}/generate-warning-pdf', [App\Http\Controllers\ReportController::class, 'generateWarningPDF'])->name('report.generateWarningPDF');
+Route::middleware(['auth'])->group(function () {
+    Route::get('/warning-letter/{report}', [App\Http\Controllers\WarningLetterController::class, 'generate'])
+        ->name('warning-letter.generate');
+});

@@ -6,6 +6,7 @@ use App\Filament\Resources\ReportResource;
 use App\Models\Report;
 use Filament\Actions;
 use Filament\Resources\Pages\EditRecord;
+use Filament\Forms\Components\Card;
 use Illuminate\Database\Eloquent\Model;
 
 class EditReport extends EditRecord

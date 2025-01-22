@@ -2,29 +2,26 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Address extends Model
 {
-    use HasFactory;
-    use SoftDeletes;
-
     protected $connection = 'addresses';
+    
+    protected $table = 'addresses';
 
     protected $fillable = [
-        'name',
-        'street',
-        'zip',
-        'city',
-        'country',
-        'lat',
-        'lng'
+        'poaFile',
+        'poaFileUploadedAt',
     ];
 
-    public function reports()
+    protected $casts = [
+        'poaFileUploadedAt' => 'datetime',
+    ];
+
+    public function reports(): HasMany
     {
-        return $this->hasMany(Report::class, 'addressid');
+        return $this->hasMany(Report::class, 'addressId');
     }
 }

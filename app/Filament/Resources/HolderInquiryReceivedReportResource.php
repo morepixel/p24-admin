@@ -5,11 +5,12 @@ namespace App\Filament\Resources;
 use App\Models\Report;
 use Filament\Forms;
 use Filament\Forms\Form;
+use Filament\Notifications\Notification;
+use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
-use Filament\Resources\Resource;
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\HtmlString;
 use App\Filament\Resources\HolderInquiryReceivedReportResource\Pages;
 
@@ -47,10 +48,15 @@ class HolderInquiryReceivedReportResource extends Resource
                 Tables\Columns\TextColumn::make('id')
                     ->label('ID')
                     ->sortable(),
-                Tables\Columns\TextColumn::make('kennzeichen')
+                Tables\Columns\TextColumn::make('fullPlateCode')
                     ->label('Kennzeichen')
-                    ->searchable()
-                    ->sortable(),
+                    ->searchable(['plateCode1', 'plateCode2', 'plateCode3'])
+                    ->sortable(query: function (Builder $query, string $direction): Builder {
+                        return $query
+                            ->orderBy('plateCode1', $direction)
+                            ->orderBy('plateCode2', $direction)
+                            ->orderBy('plateCode3', $direction);
+                    }),
                 Tables\Columns\TextColumn::make('companyname')
                     ->label('Firmenname')
                     ->searchable(),
@@ -115,18 +121,11 @@ class HolderInquiryReceivedReportResource extends Resource
             ])
             ->defaultSort('createdAt', 'desc')
             ->filters([
-                Tables\Filters\TrashedFilter::make(),
+                //
             ])
             ->actions([
-                Tables\Actions\EditAction::make(),
-                Tables\Actions\Action::make('cancel')
-                    ->label('Stornieren')
-                    ->color('danger')
-                    ->icon('heroicon-o-x-circle')
-                    ->requiresConfirmation()
-                    ->action(function (Report $record) {
-                        $record->update(['status' => 19]);
-                    }),
+                Tables\Actions\EditAction::make()
+                    ->url(fn (Report $record): string => route('filament.admin.resources.in-progress-reports.edit', ['record' => $record])),
             ])
             ->bulkActions([
                 Tables\Actions\DeleteBulkAction::make(),

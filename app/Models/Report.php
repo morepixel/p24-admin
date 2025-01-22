@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Report extends Model
 {
@@ -18,6 +19,33 @@ class Report extends Model
     const CREATED_AT = 'createdAt';
     const UPDATED_AT = 'updatedAt';
 
+    // Status-Konstanten
+    const STATUS_NEW = 0;
+    const STATUS_IN_PROGRESS = 1;
+    const STATUS_COMPLETED = 2;
+    const STATUS_HOLDER_QUERY_SENT = 3;
+    const STATUS_WARNING_CREATED = 5;
+    const STATUS_WARNING_SENT = 6;
+    const STATUS_REMINDER_SENT = 14;
+
+    // Status-Labels
+    public const STATUS_LABELS = [
+        self::STATUS_NEW => 'Neu',
+        self::STATUS_IN_PROGRESS => 'In Bearbeitung',
+        self::STATUS_COMPLETED => 'Abgeschlossen',
+        self::STATUS_HOLDER_QUERY_SENT => 'Halterabfrage verschickt',
+        self::STATUS_WARNING_CREATED => 'Abmahnung erzeugt',
+        self::STATUS_WARNING_SENT => 'Abmahnung verschickt',
+        self::STATUS_REMINDER_SENT => 'Mahnung verschickt',
+    ];
+
+    // LawyerApprovalStatus-Labels
+    public const LAWYER_APPROVAL_STATUS_LABELS = [
+        0 => 'Nicht angefragt',
+        1 => 'Freigabe angefragt',
+        2 => 'Freigegeben',
+    ];
+
     protected $fillable = [
         'plateCode1',
         'plateCode2',
@@ -29,6 +57,7 @@ class Report extends Model
         'status',
         'lawyerapprovalstatus',
         'createdAt',
+        'addressId',
     ];
 
     protected $casts = [
@@ -38,6 +67,7 @@ class Report extends Model
     protected $appends = [
         'fullPlateCode',
         'status_label',
+        'lawyerApprovalStatusLabel',
     ];
 
     protected $dates = [
@@ -51,39 +81,38 @@ class Report extends Model
         return implode('-', array_filter([$this->plateCode1, $this->plateCode2, $this->plateCode3]));
     }
 
-    public function getStatusLabelAttribute()
+    public function getStatusLabelAttribute(): string
     {
-        return match ($this->status) {
-            0 => 'Neu',
-            1 => 'In Bearbeitung',
-            2 => 'Abgeschlossen',
-            3 => 'Halteranfrage versendet',
-            4 => 'Halteranfrage empfangen',
-            5 => 'Abmahnung erstellt',
-            6 => 'Abmahnung versendet',
-            18 => 'Gelöscht',
-            19 => 'Storniert',
-            default => 'Unbekannt',
-        };
+        return self::STATUS_LABELS[$this->status] ?? "Unbekannt ({$this->status})";
+    }
+
+    public function getLawyerApprovalStatusLabelAttribute(): string
+    {
+        return self::LAWYER_APPROVAL_STATUS_LABELS[$this->lawyerapprovalstatus] ?? "Unbekannt ({$this->lawyerapprovalstatus})";
     }
 
     public static function getStatusOptions(): array
     {
-        return [
-            0 => 'Neue Reports',
-            1 => 'Neuer Vorgang ohne Vollmacht',
-            2 => 'Neuer Vorgang mit Vollmacht',
-            3 => 'Halteranfrage versendet',
-            4 => 'Halteranfrage empfangen',
-            5 => 'Abmahnung erstellt',
-            6 => 'Abmahnung versendet',
-            18 => 'Gelöscht',
-            19 => 'Storniert',
-        ];
+        return self::STATUS_LABELS;
+    }
+
+    public static function getLawyerApprovalStatusOptions(): array
+    {
+        return self::LAWYER_APPROVAL_STATUS_LABELS;
     }
 
     public function images()
     {
         return $this->hasMany(Image::class, 'reportid');
+    }
+
+    public function address(): BelongsTo
+    {
+        return $this->belongsTo(Address::class, 'addressId');
+    }
+
+    public function user()
+    {
+        return $this->belongsTo(User::class);
     }
 }

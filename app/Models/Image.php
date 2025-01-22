@@ -20,6 +20,13 @@ class Image extends Model
         'reportid'
     ];
 
+    protected $appends = ['url'];
+
+    public function getUrlAttribute()
+    {
+        return asset('storage/' . $this->path);
+    }
+
     public function report()
     {
         return $this->belongsTo(Report::class, 'reportid');

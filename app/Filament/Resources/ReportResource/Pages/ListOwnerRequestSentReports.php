@@ -3,20 +3,24 @@
 namespace App\Filament\Resources\ReportResource\Pages;
 
 use App\Filament\Resources\ReportResource;
+use Filament\Actions;
 use Filament\Resources\Pages\ListRecords;
+use App\Models\Report;
 use Illuminate\Database\Eloquent\Builder;
 
 class ListOwnerRequestSentReports extends ListRecords
 {
     protected static string $resource = ReportResource::class;
 
-    protected function getTableQuery(): Builder
+    protected function getHeaderActions(): array
     {
-        return parent::getTableQuery()->where('status', 4);
+        return [
+            Actions\CreateAction::make(),
+        ];
     }
 
-    public function getTitle(): string 
+    protected function getTableQuery(): Builder
     {
-        return 'Halterabfrage abgeschickt';
+        return Report::query()->where('status', Report::STATUS_OWNER_REQUEST_SENT);
     }
 }

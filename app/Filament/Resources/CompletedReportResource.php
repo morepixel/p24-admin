@@ -4,6 +4,7 @@ namespace App\Filament\Resources;
 
 use App\Models\Report;
 use Filament\Forms;
+use Filament\Forms\Components\Card;
 use Filament\Forms\Form;
 use Filament\Tables;
 use Filament\Tables\Table;
@@ -123,7 +124,37 @@ class CompletedReportResource extends Resource
                 Tables\Filters\TrashedFilter::make(),
             ])
             ->actions([
-                Tables\Actions\EditAction::make(),
+                Tables\Actions\EditAction::make()
+                    ->slideOver()
+                    ->form([
+                        Forms\Components\TextInput::make('plateCode1')
+                            ->label('Kennzeichen 1')
+                            ->required(),
+                        Forms\Components\TextInput::make('plateCode2')
+                            ->label('Kennzeichen 2'),
+                        Forms\Components\TextInput::make('plateCode3')
+                            ->label('Kennzeichen 3'),
+                        Forms\Components\TextInput::make('halterName')
+                            ->label('Name')
+                            ->required(),
+                        Forms\Components\TextInput::make('halterStreet')
+                            ->label('Straße')
+                            ->required(),
+                        Forms\Components\TextInput::make('halterCity')
+                            ->label('Stadt')
+                            ->required(),
+                        Forms\Components\TextInput::make('halterZip')
+                            ->label('PLZ')
+                            ->required(),
+                        Forms\Components\Select::make('status')
+                            ->label('Status')
+                            ->options(Report::STATUS_LABELS)
+                            ->required(),
+                        Forms\Components\Select::make('lawyerapprovalstatus')
+                            ->label('Anwalt Status')
+                            ->options(Report::LAWYER_APPROVAL_STATUS_LABELS)
+                            ->required(),
+                    ]),
                 Tables\Actions\Action::make('cancel')
                     ->label('Stornieren')
                     ->color('danger')

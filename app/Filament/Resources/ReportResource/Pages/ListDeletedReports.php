@@ -3,20 +3,24 @@
 namespace App\Filament\Resources\ReportResource\Pages;
 
 use App\Filament\Resources\ReportResource;
+use Filament\Actions;
 use Filament\Resources\Pages\ListRecords;
+use App\Models\Report;
 use Illuminate\Database\Eloquent\Builder;
 
 class ListDeletedReports extends ListRecords
 {
     protected static string $resource = ReportResource::class;
 
-    protected function getTableQuery(): Builder
+    protected function getHeaderActions(): array
     {
-        return parent::getTableQuery()->where('status', 18);
+        return [
+            Actions\CreateAction::make(),
+        ];
     }
 
-    public function getTitle(): string 
+    protected function getTableQuery(): Builder
     {
-        return 'Gelöschte Vorgänge';
+        return Report::query()->onlyTrashed();
     }
 }

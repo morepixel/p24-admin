@@ -2,39 +2,53 @@
 
 namespace App\Filament\Resources;
 
+use App\Filament\Resources\InProgressReportResource\Pages;
 use App\Models\Report;
 use Filament\Forms;
+use Filament\Forms\Components\Card;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
-use App\Filament\Resources\InProgressReportResource\Pages;
-use Illuminate\Support\Facades\Notification;
+use Illuminate\Support\HtmlString;
+use Filament\Infolists\Components\Section;
+use Filament\Infolists\Components\TextEntry;
+use Filament\Infolists\Components\Grid;
+use Filament\Infolists\Infolist;
 
 class InProgressReportResource extends Resource
 {
     protected static ?string $model = Report::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-document';
-    
-    protected static ?string $navigationLabel = 'Neuer Vorgang ohne Vollmacht (1)';
-    
-    protected static ?string $modelLabel = 'Neuer Vorgang ohne Vollmacht';
-    
+    protected static ?string $navigationIcon = 'heroicon-o-document-text';
+
+    protected static ?string $navigationGroup = 'Reports';
+
+    protected static ?string $navigationLabel = 'In Bearbeitung';
+
     protected static ?int $navigationSort = 2;
 
-    public static function getNavigationGroup(): ?string
+    public static function getNavigationBadge(): ?string
     {
-        return 'Reports';
+        return static::getModel()::where('status', Report::STATUS_IN_PROGRESS)->count();
     }
-    
+
     public static function getEloquentQuery(): Builder
     {
         return parent::getEloquentQuery()
-            ->where('status', 0)
-            ->whereNull('deleted_at');
+            ->whereIn('status', [
+                Report::STATUS_IN_PROGRESS,
+                Report::STATUS_COMPLETED,
+                4, // Halterabfrage zurück
+            ])
+            ->with(['address', 'images']); // Eager load both relationships
+    }
+
+    public static function form(Form $form): Form
+    {
+        return ReportResource::form($form);
     }
 
     public static function table(Table $table): Table
@@ -121,10 +135,40 @@ class InProgressReportResource extends Resource
             ])
             ->defaultSort('createdAt', 'desc')
             ->filters([
-                Tables\Filters\TrashedFilter::make(),
+                //
             ])
             ->actions([
-                Tables\Actions\EditAction::make(),
+                Tables\Actions\EditAction::make()
+                    ->slideOver()
+                    ->form([
+                        Forms\Components\TextInput::make('plateCode1')
+                            ->label('Kennzeichen 1')
+                            ->required(),
+                        Forms\Components\TextInput::make('plateCode2')
+                            ->label('Kennzeichen 2'),
+                        Forms\Components\TextInput::make('plateCode3')
+                            ->label('Kennzeichen 3'),
+                        Forms\Components\TextInput::make('halterName')
+                            ->label('Name')
+                            ->required(),
+                        Forms\Components\TextInput::make('halterStreet')
+                            ->label('Straße')
+                            ->required(),
+                        Forms\Components\TextInput::make('halterCity')
+                            ->label('Stadt')
+                            ->required(),
+                        Forms\Components\TextInput::make('halterZip')
+                            ->label('PLZ')
+                            ->required(),
+                        Forms\Components\Select::make('status')
+                            ->label('Status')
+                            ->options(Report::STATUS_LABELS)
+                            ->required(),
+                        Forms\Components\Select::make('lawyerapprovalstatus')
+                            ->label('Anwalt Status')
+                            ->options(Report::LAWYER_APPROVAL_STATUS_LABELS)
+                            ->required(),
+                    ]),
                 Tables\Actions\Action::make('cancel')
                     ->label('Stornieren')
                     ->color('danger')
@@ -139,48 +183,11 @@ class InProgressReportResource extends Resource
             ]);
     }
 
-    public static function form(Form $form): Form
+    public static function getRelations(): array
     {
-        return $form
-            ->schema([
-                Forms\Components\Section::make('System Informationen')
-                    ->schema([
-                        Forms\Components\Select::make('lawyerapprovalstatus')
-                            ->label('Anwalt Freigabe Status')
-                            ->options([
-                                0 => 'Ausstehend',
-                                1 => 'Freigegeben',
-                                2 => 'Abgelehnt'
-                            ])
-                            ->live(onBlur: true)
-                            ->dehydrated()
-                            ->afterStateUpdated(function ($state, $record, $set) {
-                                if (!$record || !is_numeric($state)) return;
-                                
-                                $record->update(['lawyerapprovalstatus' => (int)$state]);
-                                $set('lawyerapprovalstatus', (int)$state);
-                                
-                                $statusText = match ((int)$state) {
-                                    0 => 'Ausstehend',
-                                    1 => 'Freigegeben',
-                                    2 => 'Abgelehnt',
-                                    default => 'Unbekannt'
-                                };
-                                
-                                Notification::make()
-                                    ->title('Status aktualisiert')
-                                    ->success()
-                                    ->body("Der Status wurde auf '$statusText' gesetzt.")
-                                    ->send();
-                            })
-                            ->default(function ($record) {
-                                return $record ? (int)$record->lawyerapprovalstatus : 0;
-                            }),
-                        // ... andere Felder ...
-                    ])
-                    ->columns(2),
-                // ... andere Sections ...
-            ]);
+        return [
+            //
+        ];
     }
 
     public static function getPages(): array
@@ -189,5 +196,161 @@ class InProgressReportResource extends Resource
             'index' => Pages\ListInProgressReports::route('/'),
             'edit' => Pages\EditInProgressReport::route('/{record}/edit'),
         ];
+    }
+
+    public static function infolist(Infolist $infolist): Infolist
+    {
+        return $infolist
+            ->schema([
+                Grid::make(3)
+                    ->schema([
+                        Section::make('Halter')
+                            ->description('Halterdaten')
+                            ->schema([
+                                TextEntry::make('halterName')
+                                    ->label('Name'),
+                                TextEntry::make('halterStreet')
+                                    ->label('Straße'),
+                                TextEntry::make('halterZip')
+                                    ->label('PLZ'),
+                                TextEntry::make('halterCity')
+                                    ->label('Stadt'),
+                            ])
+                            ->columnSpan(2),
+
+                        Grid::make()
+                            ->schema([
+                                Section::make('Vollmacht')
+                                    ->schema([
+                                        TextEntry::make('address.poaFile')
+                                            ->label('')
+                                            ->formatStateUsing(function ($state, $record) {
+                                                if (!$record->address || !$record->address->poaFile) {
+                                                    return '';
+                                                }
+
+                                                $html = '<div class="space-y-2">';
+                                                $html .= '<a href="' . $record->address->poaFile . '" target="_blank" class="text-primary-600 hover:text-primary-500">Vollmacht</a>';
+                                                
+                                                if ($record->address->poaFileUploadedAt) {
+                                                    $html .= '<div class="text-sm text-gray-500">Hochgeladen am ' . 
+                                                        $record->address->poaFileUploadedAt->format('d.m.Y H:i:s') . 
+                                                        '</div>';
+                                                }
+                                                
+                                                $html .= '</div>';
+                                                
+                                                return new HtmlString($html);
+                                            }),
+                                    ]),
+
+                                Section::make('Bilder')
+                                    ->schema([
+                                        TextEntry::make('images')
+                                            ->label('')
+                                            ->formatStateUsing(function ($state, $record) {
+                                                if ($record->images->isEmpty()) {
+                                                    return new HtmlString('<div class="text-gray-500">Keine Bilder vorhanden</div>');
+                                                }
+
+                                                $images = $record->images->map(function ($image) {
+                                                    return [
+                                                        'url' => $image->url,
+                                                        'thumbnail' => $image->url, // Hier könnten Sie eine Thumbnail-URL verwenden, falls verfügbar
+                                                    ];
+                                                })->values()->toArray();
+
+                                                $imagesJson = json_encode($images);
+
+                                                $html = <<<HTML
+                                                <div x-data="{ 
+                                                    images: {$imagesJson},
+                                                    currentIndex: 0,
+                                                    showModal: false,
+                                                    next() {
+                                                        this.currentIndex = (this.currentIndex + 1) % this.images.length;
+                                                    },
+                                                    prev() {
+                                                        this.currentIndex = (this.currentIndex - 1 + this.images.length) % this.images.length;
+                                                    }
+                                                }">
+                                                    <!-- Thumbnail Slider -->
+                                                    <div class="relative">
+                                                        <div class="flex space-x-2 overflow-x-auto pb-2">
+                                                            <template x-for="(image, index) in images" :key="index">
+                                                                <div 
+                                                                    class="flex-none cursor-pointer"
+                                                                    @click="currentIndex = index; showModal = true"
+                                                                >
+                                                                    <img 
+                                                                        :src="image.thumbnail" 
+                                                                        class="h-24 w-24 object-cover rounded-lg hover:opacity-75 transition-opacity"
+                                                                        :class="{'ring-2 ring-primary-500': currentIndex === index}"
+                                                                    >
+                                                                </div>
+                                                            </template>
+                                                        </div>
+                                                    </div>
+
+                                                    <!-- Modal -->
+                                                    <div
+                                                        x-show="showModal"
+                                                        x-transition
+                                                        class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50"
+                                                        @click.self="showModal = false"
+                                                    >
+                                                        <div class="relative bg-white p-4 rounded-lg max-w-3xl max-h-[90vh] overflow-hidden">
+                                                            <!-- Close Button -->
+                                                            <button 
+                                                                @click="showModal = false"
+                                                                class="absolute top-2 right-2 text-gray-500 hover:text-gray-700"
+                                                            >
+                                                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                                                                </svg>
+                                                            </button>
+
+                                                            <!-- Image -->
+                                                            <div class="relative">
+                                                                <img 
+                                                                    :src="images[currentIndex].url"
+                                                                    class="max-h-[80vh] mx-auto"
+                                                                >
+
+                                                                <!-- Navigation Buttons -->
+                                                                <button 
+                                                                    @click="prev"
+                                                                    class="absolute left-2 top-1/2 -translate-y-1/2 bg-white rounded-full p-2 shadow-lg hover:bg-gray-100"
+                                                                >
+                                                                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+                                                                    </svg>
+                                                                </button>
+                                                                <button 
+                                                                    @click="next"
+                                                                    class="absolute right-2 top-1/2 -translate-y-1/2 bg-white rounded-full p-2 shadow-lg hover:bg-gray-100"
+                                                                >
+                                                                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                                                                    </svg>
+                                                                </button>
+                                                            </div>
+
+                                                            <!-- Image Counter -->
+                                                            <div class="text-center mt-2">
+                                                                <span x-text="currentIndex + 1"></span> / <span x-text="images.length"></span>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                HTML;
+
+                                                return new HtmlString($html);
+                                            }),
+                                    ]),
+                            ])
+                            ->columnSpan(1),
+                    ]),
+            ]);
     }
 }

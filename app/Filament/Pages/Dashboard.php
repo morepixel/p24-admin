@@ -4,10 +4,9 @@ namespace App\Filament\Pages;
 
 use App\Models\Report;
 use Filament\Pages\Dashboard as BaseDashboard;
-use Filament\Widgets\StatsOverviewWidget\Stat;
-use Filament\Widgets\StatsOverviewWidget\Card;
-use Filament\Widgets\StatsOverviewWidget;
-use Illuminate\Support\Facades\Auth;
+use App\Filament\Widgets\ReportStats;
+use App\Filament\Widgets\ReportChart;
+use App\Filament\Widgets\ReportListWidget;
 
 class Dashboard extends BaseDashboard
 {
@@ -19,8 +18,9 @@ class Dashboard extends BaseDashboard
     public function getWidgets(): array
     {
         return [
-            \App\Filament\Widgets\ReportStats::class,
-            \App\Filament\Widgets\ReportChart::class,
+            ReportStats::class,
+            ReportChart::class,
+            ReportListWidget::class,
         ];
     }
 }
