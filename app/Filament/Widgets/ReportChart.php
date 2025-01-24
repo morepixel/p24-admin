@@ -11,7 +11,10 @@ use Illuminate\Support\Facades\DB;
 
 class ReportChart extends ChartWidget
 {
-    protected static ?string $heading = 'Vorgänge pro Monat';
+    protected static ?string $heading = 'Reports pro Monat';
+    protected static ?string $description = 'Anzahl der Reports in den letzten 12 Monaten';
+
+    protected int $height = 300;
 
     protected function getData(): array
     {
@@ -20,8 +23,8 @@ class ReportChart extends ChartWidget
             ->selectRaw('DATE_FORMAT(createdAt, "%Y-%m") as date, COUNT(*) as aggregate')
             ->whereNull('deleted_at')
             ->whereBetween('createdAt', [
-                now()->startOfYear(),
-                now()->endOfYear(),
+                now()->subMonths(11)->startOfMonth(),
+                now()->endOfMonth(),
             ])
             ->groupByRaw('DATE_FORMAT(createdAt, "%Y-%m")')
             ->orderBy('date')
@@ -36,16 +39,39 @@ class ReportChart extends ChartWidget
         return [
             'datasets' => [
                 [
-                    'label' => 'Vorgänge',
+                    'label' => 'Reports',
                     'data' => $data->map(fn (TrendValue $value) => $value->aggregate),
+                    'borderColor' => '#10B981', // Grün
+                    'backgroundColor' => '#10B98120', // Transparentes Grün
+                    'fill' => true,
+                    'tension' => 0.3, // Leicht geschwungene Linien
                 ],
             ],
-            'labels' => $data->map(fn (TrendValue $value) => Carbon::createFromFormat('Y-m', $value->date)->format('M')),
+            'labels' => $data->map(fn (TrendValue $value) => Carbon::createFromFormat('Y-m', $value->date)->format('M Y')),
         ];
     }
 
     protected function getType(): string
     {
         return 'line';
+    }
+
+    protected function getOptions(): array
+    {
+        return [
+            'scales' => [
+                'y' => [
+                    'beginAtZero' => true,
+                    'ticks' => [
+                        'stepSize' => 1,
+                    ],
+                ],
+            ],
+            'plugins' => [
+                'legend' => [
+                    'display' => false,
+                ],
+            ],
+        ];
     }
 }

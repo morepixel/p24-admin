@@ -311,7 +311,7 @@ class ReportResource extends Resource
                     ])
                     ->columnSpan(['lg' => 3]),
 
-                Card::make()
+                Forms\Components\Card::make()
                     ->schema([
                         Forms\Components\Section::make('Status')
                             ->schema([
@@ -335,7 +335,9 @@ class ReportResource extends Resource
                                         0 => 'Nicht freigegeben',
                                         1 => 'Freigegeben',
                                         2 => 'Abgelehnt',
-                                    ]),
+                                    ])
+                                    ->required()
+                                    ->default(0),
                             ]),
 
                         Forms\Components\Section::make('Abmahnungen und Mahnungen')
@@ -402,6 +404,18 @@ class ReportResource extends Resource
                                     ->label('Vollmacht')
                                     ->view('filament.resources.report-resource.fields.file-link'),
                             ]),
+
+                        Forms\Components\Section::make('Bilder')
+                            ->schema([
+                                Forms\Components\Grid::make()
+                                    ->schema([
+                                        Forms\Components\ViewField::make('images')
+                                            ->label('')
+                                            ->view('filament.forms.components.image-preview'),
+                                    ])
+                                    ->columns(1)
+                            ])
+                            ->collapsible(),
                     ])
                     ->columnSpan(['lg' => 1]),
             ])
@@ -475,6 +489,7 @@ class ReportResource extends Resource
                     ->searchable(),
                 Tables\Columns\TextColumn::make('status')
                     ->label('Status')
+                    ->formatStateUsing(fn ($state) => "Status " . $state)
                     ->badge()
                     ->color(fn (string $state): string => match ($state) {
                         '0' => 'gray',
@@ -482,8 +497,19 @@ class ReportResource extends Resource
                         '2' => 'success',
                         '3' => 'info',
                         '4' => 'success',
-                        '5' => 'warning',
-                        '6' => 'success',
+                        '18' => 'danger',
+                        '19' => 'danger',
+                        default => 'gray',
+                    }),
+                Tables\Columns\TextColumn::make('status')
+                    ->label('Status')
+                    ->badge()
+                    ->color(fn (string $state): string => match ($state) {
+                        '0' => 'gray',
+                        '1' => 'warning',
+                        '2' => 'success',
+                        '3' => 'info',
+                        '4' => 'success',
                         '18' => 'danger',
                         '19' => 'danger',
                         default => 'gray',

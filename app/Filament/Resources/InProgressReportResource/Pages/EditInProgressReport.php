@@ -117,15 +117,8 @@ class EditInProgressReport extends EditRecord
                                         TextEntry::make('images')
                                             ->label('')
                                             ->formatStateUsing(function ($state, $record) {
-                                                // Debug information
-                                                $debug = "Images count: " . $record->images->count() . "\n";
-                                                foreach ($record->images as $image) {
-                                                    $debug .= "Image path: " . $image->path . "\n";
-                                                    $debug .= "Image URL: " . $image->url . "\n";
-                                                }
-
                                                 if ($record->images->isEmpty()) {
-                                                    return new HtmlString('<div class="text-gray-500">Keine Bilder vorhanden</div>' . nl2br($debug));
+                                                    return new HtmlString('<div class="text-gray-500">Keine Bilder vorhanden</div>');
                                                 }
 
                                                 $images = $record->images->map(function ($image) {
@@ -147,11 +140,16 @@ class EditInProgressReport extends EditRecord
                                                     },
                                                     prev() {
                                                         this.currentIndex = (this.currentIndex - 1 + this.images.length) % this.images.length;
+                                                    },
+                                                    handleKeydown(e) {
+                                                        if (!this.showModal) return;
+                                                        if (e.key === 'ArrowRight') this.next();
+                                                        if (e.key === 'ArrowLeft') this.prev();
+                                                        if (e.key === 'Escape') this.showModal = false;
                                                     }
-                                                }">
-                                                    <!-- Debug Info -->
-                                                    <pre class="text-xs text-gray-500 mb-4">{$debug}</pre>
-
+                                                }" 
+                                                @keydown.window="handleKeydown"
+                                                >
                                                     <!-- Thumbnail Slider -->
                                                     <div class="relative">
                                                         <div class="flex space-x-2 overflow-x-auto pb-2">
@@ -173,32 +171,38 @@ class EditInProgressReport extends EditRecord
                                                     <!-- Modal -->
                                                     <div
                                                         x-show="showModal"
-                                                        x-transition
-                                                        class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50"
+                                                        x-transition:enter="transition ease-out duration-300"
+                                                        x-transition:enter-start="opacity-0 transform scale-90"
+                                                        x-transition:enter-end="opacity-100 transform scale-100"
+                                                        x-transition:leave="transition ease-in duration-300"
+                                                        x-transition:leave-start="opacity-100 transform scale-100"
+                                                        x-transition:leave-end="opacity-0 transform scale-90"
+                                                        class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-75"
                                                         @click.self="showModal = false"
                                                     >
-                                                        <div class="relative bg-white p-4 rounded-lg max-w-3xl max-h-[90vh] overflow-hidden">
+                                                        <div class="relative bg-white dark:bg-gray-800 p-4 rounded-lg max-w-4xl w-full mx-4">
                                                             <!-- Close Button -->
                                                             <button 
                                                                 @click="showModal = false"
-                                                                class="absolute top-2 right-2 text-gray-500 hover:text-gray-700"
+                                                                class="absolute top-2 right-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
                                                             >
                                                                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
                                                                 </svg>
                                                             </button>
 
-                                                            <!-- Image -->
-                                                            <div class="relative">
+                                                            <!-- Image Container -->
+                                                            <div class="relative aspect-video">
                                                                 <img 
                                                                     :src="images[currentIndex].url"
-                                                                    class="max-h-[80vh] mx-auto"
+                                                                    class="w-full h-full object-contain"
+                                                                    style="max-height: calc(100vh - 200px);"
                                                                 >
 
                                                                 <!-- Navigation Buttons -->
                                                                 <button 
                                                                     @click="prev"
-                                                                    class="absolute left-2 top-1/2 -translate-y-1/2 bg-white rounded-full p-2 shadow-lg hover:bg-gray-100"
+                                                                    class="absolute left-4 top-1/2 -translate-y-1/2 bg-white dark:bg-gray-800 rounded-full p-2 shadow-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
                                                                 >
                                                                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
@@ -206,7 +210,7 @@ class EditInProgressReport extends EditRecord
                                                                 </button>
                                                                 <button 
                                                                     @click="next"
-                                                                    class="absolute right-2 top-1/2 -translate-y-1/2 bg-white rounded-full p-2 shadow-lg hover:bg-gray-100"
+                                                                    class="absolute right-4 top-1/2 -translate-y-1/2 bg-white dark:bg-gray-800 rounded-full p-2 shadow-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
                                                                 >
                                                                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
@@ -214,9 +218,14 @@ class EditInProgressReport extends EditRecord
                                                                 </button>
                                                             </div>
 
-                                                            <!-- Image Counter -->
-                                                            <div class="text-center mt-2">
-                                                                <span x-text="currentIndex + 1"></span> / <span x-text="images.length"></span>
+                                                            <!-- Image Counter and Controls -->
+                                                            <div class="mt-4 flex items-center justify-between px-4">
+                                                                <div class="text-sm text-gray-500 dark:text-gray-400">
+                                                                    Bild <span x-text="currentIndex + 1"></span> von <span x-text="images.length"></span>
+                                                                </div>
+                                                                <div class="text-sm text-gray-500 dark:text-gray-400">
+                                                                    Verwenden Sie ← → zum Navigieren, ESC zum Schließen
+                                                                </div>
                                                             </div>
                                                         </div>
                                                     </div>

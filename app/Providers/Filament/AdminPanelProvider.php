@@ -6,6 +6,7 @@ use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
 use Filament\Http\Middleware\DispatchServingFilamentEvent;
+use Filament\Navigation\NavigationGroup;
 use Filament\Navigation\NavigationItem;
 use Filament\Pages;
 use Filament\Panel;
@@ -63,6 +64,24 @@ class AdminPanelProvider extends PanelProvider
                 Authenticate::class,
             ])
             ->brandName('P24 Admin')
-            ->favicon(null);
+            ->favicon(null)
+            ->navigationGroups([
+                NavigationGroup::make()
+                    ->label('Reports')
+                    ->items([
+                        NavigationItem::make('Neue Reports')
+                            ->icon('heroicon-o-document-text')
+                            ->url('/admin/reports'),
+                        NavigationItem::make('In Bearbeitung')
+                            ->icon('heroicon-o-document-text')
+                            ->url('/admin/in-progress-reports'),
+                        NavigationItem::make('Halteranfrage versendet')
+                            ->icon('heroicon-o-document-text')
+                            ->url('/admin/holder-inquiry-received-reports'),
+                        NavigationItem::make('Halterabfrage zurück')
+                            ->icon('heroicon-o-document-text')
+                            ->url('/admin/completed-reports'),
+                    ]),
+            ]);
     }
 }

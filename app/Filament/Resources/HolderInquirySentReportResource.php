@@ -14,6 +14,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\HtmlString;
 use App\Filament\Resources\HolderInquirySentReportResource\Pages;
+use App\Filament\Resources\ReportResource;
 
 class HolderInquirySentReportResource extends Resource
 {
@@ -122,41 +123,10 @@ class HolderInquirySentReportResource extends Resource
                     ->formatStateUsing(fn (Report $record): string => $record->status_label),
             ])
             ->defaultSort('createdAt', 'desc')
-            ->filters([
-                Tables\Filters\TrashedFilter::make(),
-            ])
             ->actions([
-                Tables\Actions\EditAction::make()
-                    ->slideOver()
-                    ->form([
-                        Forms\Components\TextInput::make('plateCode1')
-                            ->label('Kennzeichen 1')
-                            ->required(),
-                        Forms\Components\TextInput::make('plateCode2')
-                            ->label('Kennzeichen 2'),
-                        Forms\Components\TextInput::make('plateCode3')
-                            ->label('Kennzeichen 3'),
-                        Forms\Components\TextInput::make('halterName')
-                            ->label('Name')
-                            ->required(),
-                        Forms\Components\TextInput::make('halterStreet')
-                            ->label('Straße')
-                            ->required(),
-                        Forms\Components\TextInput::make('halterCity')
-                            ->label('Stadt')
-                            ->required(),
-                        Forms\Components\TextInput::make('halterZip')
-                            ->label('PLZ')
-                            ->required(),
-                        Forms\Components\Select::make('status')
-                            ->label('Status')
-                            ->options(Report::STATUS_LABELS)
-                            ->required(),
-                        Forms\Components\Select::make('lawyerapprovalstatus')
-                            ->label('Anwalt Status')
-                            ->options(Report::LAWYER_APPROVAL_STATUS_LABELS)
-                            ->required(),
-                    ]),
+                Tables\Actions\Action::make('edit')
+                    ->url(fn (Report $record): string => route('filament.admin.resources.holder-inquiry-sent-reports.edit', ['record' => $record]))
+                    ->icon('heroicon-m-pencil-square'),
                 Tables\Actions\Action::make('cancel')
                     ->label('Stornieren')
                     ->color('danger')
@@ -171,10 +141,16 @@ class HolderInquirySentReportResource extends Resource
             ]);
     }
 
+    public static function form(Form $form): Form
+    {
+        return ReportResource::form($form);
+    }
+
     public static function getPages(): array
     {
         return [
             'index' => Pages\ListHolderInquirySentReports::route('/'),
+            'edit' => Pages\EditHolderInquirySentReport::route('/{record}/edit'),
         ];
     }
 }

@@ -12,6 +12,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\HtmlString;
 use App\Filament\Resources\CanceledReportResource\Pages;
+use App\Filament\Resources\ReportResource;
 
 class CanceledReportResource extends Resource
 {
@@ -121,11 +122,10 @@ class CanceledReportResource extends Resource
                     ->formatStateUsing(fn (Report $record): string => $record->status_label),
             ])
             ->defaultSort('createdAt', 'desc')
-            ->filters([
-                Tables\Filters\TrashedFilter::make(),
-            ])
             ->actions([
-                Tables\Actions\EditAction::make(),
+                Tables\Actions\Action::make('edit')
+                    ->url(fn (Report $record): string => route('filament.admin.resources.in-progress-reports.edit', ['record' => $record]))
+                    ->icon('heroicon-m-pencil-square'),
                 Tables\Actions\Action::make('cancel')
                     ->label('Stornieren')
                     ->color('danger')
@@ -140,10 +140,16 @@ class CanceledReportResource extends Resource
             ]);
     }
 
+    public static function form(Form $form): Form
+    {
+        return ReportResource::form($form);
+    }
+
     public static function getPages(): array
     {
         return [
             'index' => Pages\ListCanceledReports::route('/'),
+            'edit' => Pages\EditCanceledReport::route('/{record}/edit'),
         ];
     }
 }

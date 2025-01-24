@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Storage;
 
 class Image extends Model
 {
@@ -17,15 +18,9 @@ class Image extends Model
         'filename',
         'path',
         'type',
-        'reportid'
+        'reportid',
+        'url'
     ];
-
-    protected $appends = ['url'];
-
-    public function getUrlAttribute()
-    {
-        return asset('storage/' . $this->path);
-    }
 
     public function report()
     {
