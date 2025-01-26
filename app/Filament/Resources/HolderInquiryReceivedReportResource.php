@@ -104,7 +104,6 @@ class HolderInquiryReceivedReportResource extends Resource
                     ->searchable(),
                 Tables\Columns\TextColumn::make('status')
                     ->label('Status')
-                    ->formatStateUsing(fn ($state) => "Status " . $state)
                     ->badge()
                     ->color(fn (string $state): string => match ($state) {
                         '0' => 'gray',
@@ -112,19 +111,8 @@ class HolderInquiryReceivedReportResource extends Resource
                         '2' => 'success',
                         '3' => 'info',
                         '4' => 'success',
-                        '18' => 'danger',
-                        '19' => 'danger',
-                        default => 'gray',
-                    }),
-                Tables\Columns\TextColumn::make('status')
-                    ->label('Status')
-                    ->badge()
-                    ->color(fn (string $state): string => match ($state) {
-                        '0' => 'gray',
-                        '1' => 'warning',
-                        '2' => 'success',
-                        '3' => 'info',
-                        '4' => 'success',
+                        '5' => 'warning',
+                        '6' => 'success',
                         '18' => 'danger',
                         '19' => 'danger',
                         default => 'gray',

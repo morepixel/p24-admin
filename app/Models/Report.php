@@ -27,6 +27,8 @@ class Report extends Model
     const STATUS_WARNING_CREATED = 5;
     const STATUS_WARNING_SENT = 6;
     const STATUS_REMINDER_SENT = 14;
+    const STATUS_CANCELED = 18;
+    const STATUS_DELETED = 19;
 
     // Status-Labels
     public const STATUS_LABELS = [
@@ -37,6 +39,8 @@ class Report extends Model
         self::STATUS_WARNING_CREATED => 'Abmahnung erzeugt',
         self::STATUS_WARNING_SENT => 'Abmahnung verschickt',
         self::STATUS_REMINDER_SENT => 'Mahnung verschickt',
+        self::STATUS_CANCELED => 'Storniert',
+        self::STATUS_DELETED => 'Gelöscht',
     ];
 
     // LawyerApprovalStatus-Labels
@@ -58,10 +62,13 @@ class Report extends Model
         'lawyerapprovalstatus',
         'createdAt',
         'addressId',
+        'status_changed_at',
     ];
 
     protected $casts = [
         'createdAt' => 'datetime',
+        'updatedAt' => 'datetime',
+        'status_changed_at' => 'datetime',
     ];
 
     protected $appends = [
@@ -74,6 +81,7 @@ class Report extends Model
         'createdAt',
         'updatedAt',
         'deleted_at',
+        'status_changed_at',
     ];
 
     public function getFullPlateCodeAttribute()
@@ -83,7 +91,7 @@ class Report extends Model
 
     public function getStatusLabelAttribute(): string
     {
-        return self::STATUS_LABELS[$this->status] ?? "Unbekannt ({$this->status})";
+        return "Status {$this->status}";
     }
 
     public function getLawyerApprovalStatusLabelAttribute(): string
@@ -99,6 +107,17 @@ class Report extends Model
     public static function getLawyerApprovalStatusOptions(): array
     {
         return self::LAWYER_APPROVAL_STATUS_LABELS;
+    }
+
+    protected static function boot()
+    {
+        parent::boot();
+
+        static::updating(function ($report) {
+            if ($report->isDirty('status')) {
+                $report->status_changed_at = now();
+            }
+        });
     }
 
     public function images()

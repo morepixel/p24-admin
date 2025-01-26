@@ -23,6 +23,8 @@ use App\Filament\Pages\Dashboard;
 use App\Filament\Widgets\ReportStats;
 use App\Filament\Widgets\ReportChart;
 use App\Filament\Widgets\ReportListWidget;
+use App\Filament\Widgets\RevenueChart;
+use App\Filament\Widgets\DeadlineWidget;
 
 class AdminPanelProvider extends PanelProvider
 {
@@ -41,13 +43,13 @@ class AdminPanelProvider extends PanelProvider
             ->pages([
                 Dashboard::class,
             ])
-            ->discoverWidgets(in: app_path('Filament/Widgets'), for: 'App\\Filament\\Widgets')
             ->widgets([
+                DeadlineWidget::class,
                 ReportStats::class,
                 ReportChart::class,
+                RevenueChart::class,
                 ReportListWidget::class,
                 Widgets\AccountWidget::class,
-                Widgets\FilamentInfoWidget::class,
             ])
             ->middleware([
                 EncryptCookies::class,
