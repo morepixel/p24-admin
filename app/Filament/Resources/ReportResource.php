@@ -46,6 +46,15 @@ class ReportResource extends Resource
         return null;
     }
 
+    public static function getPluralModelLabel(): string
+    {
+        return static::$modelLabel ?? (string) str(class_basename(static::getModel()))
+            ->beforeLast('Resource')
+            ->kebab()
+            ->replace('-', ' ')
+            ->title();
+    }
+
     public static function getNavigationGroups(): array
     {
         return ['Reports'];
@@ -168,90 +177,105 @@ class ReportResource extends Resource
                                     ->schema([
                                         Forms\Components\TextInput::make('firstname')
                                             ->label('Vorname')
-                                            ->required(),
+                                            ->maxLength(128),
                                         Forms\Components\TextInput::make('lastname')
                                             ->label('Nachname')
-                                            ->required(),
+                                            ->maxLength(128),
                                     ]),
                                 Forms\Components\Grid::make(2)
                                     ->schema([
                                         Forms\Components\TextInput::make('email')
                                             ->label('E-Mail')
                                             ->email()
-                                            ->required(),
-                                        Forms\Components\TextInput::make('phone')
-                                            ->label('Telefon')
-                                            ->tel(),
+                                            ->maxLength(255),
                                     ]),
                                 Forms\Components\TextInput::make('companyName')
-                                    ->label('Firmenname'),
+                                    ->label('Firmenname')
+                                    ->maxLength(128),
                             ]),
 
                         Forms\Components\Section::make('Fahrzeugdaten')
                             ->schema([
-                                Forms\Components\TextInput::make('plateCode1')
-                                    ->label('Kennzeichen Teil 1')
-                                    ->required(),
-                                Forms\Components\TextInput::make('plateCode2')
-                                    ->label('Kennzeichen Teil 2')
-                                    ->required(),
-                                Forms\Components\TextInput::make('plateCode3')
-                                    ->label('Kennzeichen Teil 3')
-                                    ->required(),
+                                Forms\Components\Grid::make(3)
+                                    ->schema([
+                                        Forms\Components\TextInput::make('plateCode1')
+                                            ->label('Kennzeichen Teil 1')
+                                            ->maxLength(3),
+                                        Forms\Components\TextInput::make('plateCode2')
+                                            ->label('Kennzeichen Teil 2')
+                                            ->maxLength(2),
+                                        Forms\Components\TextInput::make('plateCode3')
+                                            ->label('Kennzeichen Teil 3')
+                                            ->maxLength(4),
+                                    ]),
+                            ]),
+
+                        Forms\Components\Section::make('Halterdaten')
+                            ->description('Daten aus der Halterabfrage')
+                            ->collapsible()
+                            ->persistCollapsed()
+                            ->columnSpan(2)
+                            ->icon('heroicon-o-user')
+                            ->extraAttributes([
+                                'style' => 'background-color: rgb(254 249 195);',
                             ])
-                            ->columns(3),
+                            ->schema([
+                                Forms\Components\DatePicker::make('halterDatum')
+                                    ->label('Halterabfrage zurück')
+                                    ->format('Y-m-d'),
+                                Forms\Components\Grid::make(3)
+                                    ->schema([
+                                        Forms\Components\TextInput::make('halterName')
+                                            ->label('Name')
+                                            ->columnSpan(2),
+                                        Forms\Components\TextInput::make('halterGeschlecht')
+                                            ->label('Geschlecht'),
+                                    ]),
+                                Forms\Components\TextInput::make('halterStrasse')
+                                    ->label('Straße'),
+                                Forms\Components\Grid::make(2)
+                                    ->schema([
+                                        Forms\Components\TextInput::make('halterPLZ')
+                                            ->label('PLZ'),
+                                        Forms\Components\TextInput::make('halterOrt')
+                                            ->label('Ort'),
+                                    ]),
+                            ]),
+
+                        Forms\Components\Section::make('Status')
+                            ->schema([
+                                Forms\Components\Select::make('status')
+                                    ->label('Status')
+                                    ->options(Report::STATUS_LABELS)
+                                    ->required(),
+                                Forms\Components\Select::make('lawyerapprovalstatus')
+                                    ->label('Anwalt Status')
+                                    ->options(Report::LAWYER_APPROVAL_STATUS_LABELS)
+                                    ->required(),
+                            ]),
 
                         Forms\Components\Section::make('Adressdaten')
                             ->schema([
                                 Forms\Components\TextInput::make('street')
                                     ->label('Straße')
-                                    ->required(),
+                                    ->maxLength(255),
                                 Forms\Components\Grid::make()
                                     ->schema([
                                         Forms\Components\TextInput::make('zip')
                                             ->label('PLZ')
-                                            ->required()
+                                            ->length(5)
+                                            ->numeric()
                                             ->columnSpan(1),
                                         Forms\Components\TextInput::make('city')
                                             ->label('Stadt')
-                                            ->required()
+                                            ->maxLength(128)
                                             ->columnSpan(3),
                                     ])
                                     ->columns(4),
                                 Forms\Components\TextInput::make('country')
                                     ->label('Land')
-                                    ->default('Deutschland'),
-                            ]),
-
-                        Forms\Components\Section::make('Halter')
-                            ->schema([
-                                Forms\Components\Grid::make()
-                                    ->schema([
-                                        Forms\Components\TextInput::make('haltername')
-                                            ->label('Name')
-                                            ->columnSpan(3),
-                                        Forms\Components\Select::make('haltergeschlecht')
-                                            ->label('Geschlecht')
-                                            ->options([
-                                                'Herr' => 'Herr',
-                                                'Frau' => 'Frau',
-                                                'Firma' => 'Firma',
-                                            ])
-                                            ->columnSpan(1),
-                                    ])
-                                    ->columns(4),
-                                Forms\Components\TextInput::make('halterstrasse')
-                                    ->label('Straße'),
-                                Forms\Components\Grid::make()
-                                    ->schema([
-                                        Forms\Components\TextInput::make('halterplz')
-                                            ->label('PLZ')
-                                            ->columnSpan(1),
-                                        Forms\Components\TextInput::make('halterort')
-                                            ->label('Ort')
-                                            ->columnSpan(3),
-                                    ])
-                                    ->columns(4),
+                                    ->default('Deutschland')
+                                    ->maxLength(128),
                             ]),
 
                         Forms\Components\Section::make('Fahrer')
@@ -260,26 +284,31 @@ class ReportResource extends Resource
                                     ->schema([
                                         Forms\Components\TextInput::make('fahrername')
                                             ->label('Name')
+                                            ->maxLength(128)
                                             ->columnSpan(3),
                                         Forms\Components\Select::make('fahrergeschlecht')
                                             ->label('Geschlecht')
                                             ->options([
-                                                'Herr' => 'Herr',
-                                                'Frau' => 'Frau',
-                                                'Firma' => 'Firma',
+                                                'M' => 'Herr',
+                                                'W' => 'Frau',
+                                                'F' => 'Firma',
                                             ])
                                             ->columnSpan(1),
                                     ])
                                     ->columns(4),
                                 Forms\Components\TextInput::make('fahrerstrasse')
-                                    ->label('Straße'),
+                                    ->label('Straße')
+                                    ->maxLength(255),
                                 Forms\Components\Grid::make()
                                     ->schema([
                                         Forms\Components\TextInput::make('fahrerplz')
                                             ->label('PLZ')
+                                            ->length(5)
+                                            ->numeric()
                                             ->columnSpan(1),
                                         Forms\Components\TextInput::make('fahrerort')
                                             ->label('Ort')
+                                            ->maxLength(128)
                                             ->columnSpan(3),
                                     ])
                                     ->columns(4),
@@ -287,40 +316,71 @@ class ReportResource extends Resource
 
                         Forms\Components\Section::make('Zusätzliche Informationen')
                             ->schema([
-                                Forms\Components\TextInput::make('lawyerdetails')
-                                    ->label('Anwaltsdetails'),
-                                Forms\Components\TextInput::make('halterdatum')
-                                    ->label('Halterdatum'),
-                                Forms\Components\TextInput::make('zahlungsziel')
-                                    ->label('Zahlungsziel'),
+                                Forms\Components\Textarea::make('lawyerdetails')
+                                    ->label('Anwaltsdetails')
+                                    ->maxLength(2000),
+                                Forms\Components\DatePicker::make('zahlungsziel')
+                                    ->label('Zahlungsziel')
+                                    ->format('d.m.Y')
+                                    ->displayFormat('d.m.Y'),
                                 Forms\Components\TextInput::make('kennnummer')
-                                    ->label('Kennnummer'),
-                                Forms\Components\TextInput::make('kbafile')
-                                    ->label('KBA Datei'),
-                                Forms\Components\TextInput::make('uefile')
-                                    ->label('UE Datei'),
+                                    ->label('Kennnummer')
+                                    ->maxLength(128),
+                                Forms\Components\FileUpload::make('kbafile')
+                                    ->label('KBA Datei')
+                                    ->disk('public')
+                                    ->directory('kba-files')
+                                    ->acceptedFileTypes(['application/pdf']),
+                                Forms\Components\FileUpload::make('uefile')
+                                    ->label('UE Datei')
+                                    ->disk('public')
+                                    ->directory('ue-files')
+                                    ->acceptedFileTypes(['application/pdf']),
                                 Forms\Components\DateTimePicker::make('uefileuploadedat')
-                                    ->label('UE Datei hochgeladen am'),
+                                    ->label('UE Datei hochgeladen am')
+                                    ->format('d.m.Y H:i:s')
+                                    ->displayFormat('d.m.Y H:i:s'),
                                 Forms\Components\Textarea::make('notes')
                                     ->label('Notizen')
-                                    ->rows(3),
+                                    ->rows(3)
+                                    ->maxLength(65535),
                                 Forms\Components\Textarea::make('reportresponse')
                                     ->label('Report Antwort')
-                                    ->rows(3),
+                                    ->rows(3)
+                                    ->maxLength(65535),
+                            ]),
+
+                        Forms\Components\Section::make('Status-Historie')
+                            ->schema([
+                                Forms\Components\Repeater::make('statusHistory')
+                                    ->label('Status-Änderungen')
+                                    ->relationship('statusHistory')
+                                    ->schema([
+                                        Forms\Components\TextInput::make('old_status_label')
+                                            ->label('Alter Status')
+                                            ->disabled(),
+                                        Forms\Components\TextInput::make('new_status_label')
+                                            ->label('Neuer Status')
+                                            ->disabled(),
+                                        Forms\Components\TextInput::make('changed_by')
+                                            ->label('Geändert von')
+                                            ->disabled(),
+                                        Forms\Components\TextInput::make('created_at')
+                                            ->label('Datum')
+                                            ->disabled(),
+                                    ])
+                                    ->columns(4)
+                                    ->disabled()
+                                    ->defaultItems(0)
+                                    ->reorderable(false)
+                                    ->addable(false)
+                                    ->deletable(false),
                             ]),
                     ])
                     ->columnSpan(['lg' => 3]),
 
                 Forms\Components\Card::make()
                     ->schema([
-                        Forms\Components\Section::make('Status')
-                            ->schema([
-                                Forms\Components\Select::make('status')
-                                    ->label('Status')
-                                    ->options(Report::getStatusOptions())
-                                    ->required(),
-                            ]),
-
                         Forms\Components\Section::make('System Informationen')
                             ->schema([
                                 Forms\Components\Toggle::make('paymentstatus')
@@ -329,15 +389,8 @@ class ReportResource extends Resource
                                     ->label('Admin E-Mail gesendet'),
                                 Forms\Components\Toggle::make('paidkba')
                                     ->label('KBA bezahlt'),
-                                Forms\Components\Select::make('lawyerapprovalstatus')
-                                    ->label('Anwalt Freigabe Status')
-                                    ->options([
-                                        0 => 'Nicht freigegeben',
-                                        1 => 'Freigegeben',
-                                        2 => 'Abgelehnt',
-                                    ])
-                                    ->required()
-                                    ->default(0),
+                                Forms\Components\DateTimePicker::make('uefileuploadedat')
+                                    ->label('UE File hochgeladen'),
                             ]),
 
                         Forms\Components\Section::make('Abmahnungen und Mahnungen')
@@ -526,32 +579,25 @@ class ReportResource extends Resource
                     ->slideOver()
                     ->form([
                         Forms\Components\TextInput::make('plateCode1')
-                            ->label('Kennzeichen 1')
-                            ->required(),
+                            ->label('Kennzeichen 1'),
                         Forms\Components\TextInput::make('plateCode2')
                             ->label('Kennzeichen 2'),
                         Forms\Components\TextInput::make('plateCode3')
                             ->label('Kennzeichen 3'),
                         Forms\Components\TextInput::make('halterName')
-                            ->label('Name')
-                            ->required(),
+                            ->label('Name'),
                         Forms\Components\TextInput::make('halterStreet')
-                            ->label('Straße')
-                            ->required(),
+                            ->label('Straße'),
                         Forms\Components\TextInput::make('halterCity')
-                            ->label('Stadt')
-                            ->required(),
+                            ->label('Stadt'),
                         Forms\Components\TextInput::make('halterZip')
-                            ->label('PLZ')
-                            ->required(),
+                            ->label('PLZ'),
                         Forms\Components\Select::make('status')
                             ->label('Status')
-                            ->options(Report::STATUS_LABELS)
-                            ->required(),
+                            ->options(Report::STATUS_LABELS),
                         Forms\Components\Select::make('lawyerapprovalstatus')
                             ->label('Anwalt Status')
-                            ->options(Report::LAWYER_APPROVAL_STATUS_LABELS)
-                            ->required(),
+                            ->options(Report::LAWYER_APPROVAL_STATUS_LABELS),
                     ]),
                 Tables\Actions\Action::make('stornieren')
                     ->label('Stornieren')

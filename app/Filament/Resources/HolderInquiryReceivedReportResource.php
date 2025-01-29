@@ -20,7 +20,7 @@ class HolderInquiryReceivedReportResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-inbox-arrow-down';
     
-    protected static ?string $navigationLabel = 'Halterabfrage zurück (4)';
+    protected static ?string $navigationLabel = 'Halterabfrage zurück';
     
     protected static ?string $modelLabel = 'Halterabfrage zurück';
     
@@ -117,7 +117,7 @@ class HolderInquiryReceivedReportResource extends Resource
                         '19' => 'danger',
                         default => 'gray',
                     })
-                    ->formatStateUsing(fn (Report $record): string => $record->status_label),
+                    ->formatStateUsing(fn (int $state): string => "Status {$state}"),
             ])
             ->defaultSort('createdAt', 'desc')
             ->filters([

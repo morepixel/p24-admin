@@ -164,18 +164,17 @@ class InProgressReportResource extends Resource
                             ->label('Kennzeichen 2'),
                         Forms\Components\TextInput::make('plateCode3')
                             ->label('Kennzeichen 3'),
+                        Forms\Components\DatePicker::make('halterDatum')
+                            ->label('Halterabfrage zurück')
+                            ->format('Y-m-d'),
                         Forms\Components\TextInput::make('halterName')
-                            ->label('Name')
-                            ->required(),
-                        Forms\Components\TextInput::make('halterStreet')
-                            ->label('Straße')
-                            ->required(),
-                        Forms\Components\TextInput::make('halterCity')
-                            ->label('Stadt')
-                            ->required(),
-                        Forms\Components\TextInput::make('halterZip')
-                            ->label('PLZ')
-                            ->required(),
+                            ->label('Name'),
+                        Forms\Components\TextInput::make('halterStrasse')
+                            ->label('Straße'),
+                        Forms\Components\TextInput::make('halterPLZ')
+                            ->label('PLZ'),
+                        Forms\Components\TextInput::make('halterOrt')
+                            ->label('Ort'),
                         Forms\Components\Select::make('status')
                             ->label('Status')
                             ->options(Report::STATUS_LABELS)
@@ -218,154 +217,58 @@ class InProgressReportResource extends Resource
     {
         return $infolist
             ->schema([
-                Grid::make(3)
+                Section::make('Vorgang')
                     ->schema([
-                        Section::make('Halter')
-                            ->description('Halterdaten')
+                        Grid::make(3)
                             ->schema([
-                                TextEntry::make('halterName')
-                                    ->label('Name'),
-                                TextEntry::make('halterStreet')
-                                    ->label('Straße'),
-                                TextEntry::make('halterZip')
-                                    ->label('PLZ'),
-                                TextEntry::make('halterCity')
-                                    ->label('Stadt'),
-                            ])
-                            ->columnSpan(2),
-
-                        Grid::make()
+                                TextEntry::make('id')
+                                    ->label('Vorgangsnummer'),
+                                TextEntry::make('status')
+                                    ->label('Status')
+                                    ->badge()
+                                    ->color(fn (string $state): string => match ($state) {
+                                        '0' => 'gray',
+                                        '1' => 'warning',
+                                        '2' => 'success',
+                                        '3' => 'info',
+                                        '4' => 'success',
+                                        '5' => 'warning',
+                                        '6' => 'success',
+                                        '18' => 'danger',
+                                        '19' => 'danger',
+                                        default => 'gray',
+                                    })
+                                    ->formatStateUsing(fn (int $state): string => "Status {$state}"),
+                                TextEntry::make('createdAt')
+                                    ->label('Erstellt')
+                                    ->date('d.m.Y'),
+                            ]),
+                    ]),
+                Section::make('Kennzeichen')
+                    ->schema([
+                        Grid::make(3)
                             ->schema([
-                                Section::make('Vollmacht')
-                                    ->schema([
-                                        TextEntry::make('address.poaFile')
-                                            ->label('')
-                                            ->formatStateUsing(function ($state, $record) {
-                                                if (!$record->address || !$record->address->poaFile) {
-                                                    return '';
-                                                }
-
-                                                $html = '<div class="space-y-2">';
-                                                $html .= '<a href="' . $record->address->poaFile . '" target="_blank" class="text-primary-600 hover:text-primary-500">Vollmacht</a>';
-                                                
-                                                if ($record->address->poaFileUploadedAt) {
-                                                    $html .= '<div class="text-sm text-gray-500">Hochgeladen am ' . 
-                                                        $record->address->poaFileUploadedAt->format('d.m.Y H:i:s') . 
-                                                        '</div>';
-                                                }
-                                                
-                                                $html .= '</div>';
-                                                
-                                                return new HtmlString($html);
-                                            }),
-                                    ]),
-
-                                Section::make('Bilder')
-                                    ->schema([
-                                        TextEntry::make('images')
-                                            ->label('')
-                                            ->formatStateUsing(function ($state, $record) {
-                                                if ($record->images->isEmpty()) {
-                                                    return new HtmlString('<div class="text-gray-500">Keine Bilder vorhanden</div>');
-                                                }
-
-                                                $images = $record->images->map(function ($image) {
-                                                    return [
-                                                        'url' => $image->url,
-                                                        'thumbnail' => $image->url, // Hier könnten Sie eine Thumbnail-URL verwenden, falls verfügbar
-                                                    ];
-                                                })->values()->toArray();
-
-                                                $imagesJson = json_encode($images);
-
-                                                $html = <<<HTML
-                                                <div x-data="{ 
-                                                    images: {$imagesJson},
-                                                    currentIndex: 0,
-                                                    showModal: false,
-                                                    next() {
-                                                        this.currentIndex = (this.currentIndex + 1) % this.images.length;
-                                                    },
-                                                    prev() {
-                                                        this.currentIndex = (this.currentIndex - 1 + this.images.length) % this.images.length;
-                                                    }
-                                                }">
-                                                    <!-- Thumbnail Slider -->
-                                                    <div class="relative">
-                                                        <div class="flex space-x-2 overflow-x-auto pb-2">
-                                                            <template x-for="(image, index) in images" :key="index">
-                                                                <div 
-                                                                    class="flex-none cursor-pointer"
-                                                                    @click="currentIndex = index; showModal = true"
-                                                                >
-                                                                    <img 
-                                                                        :src="image.thumbnail" 
-                                                                        class="h-24 w-24 object-cover rounded-lg hover:opacity-75 transition-opacity"
-                                                                        :class="{'ring-2 ring-primary-500': currentIndex === index}"
-                                                                    >
-                                                                </div>
-                                                            </template>
-                                                        </div>
-                                                    </div>
-
-                                                    <!-- Modal -->
-                                                    <div
-                                                        x-show="showModal"
-                                                        x-transition
-                                                        class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50"
-                                                        @click.self="showModal = false"
-                                                    >
-                                                        <div class="relative bg-white p-4 rounded-lg max-w-3xl max-h-[90vh] overflow-hidden">
-                                                            <!-- Close Button -->
-                                                            <button 
-                                                                @click="showModal = false"
-                                                                class="absolute top-2 right-2 text-gray-500 hover:text-gray-700"
-                                                            >
-                                                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-                                                                </svg>
-                                                            </button>
-
-                                                            <!-- Image -->
-                                                            <div class="relative">
-                                                                <img 
-                                                                    :src="images[currentIndex].url"
-                                                                    class="max-h-[80vh] mx-auto"
-                                                                >
-
-                                                                <!-- Navigation Buttons -->
-                                                                <button 
-                                                                    @click="prev"
-                                                                    class="absolute left-2 top-1/2 -translate-y-1/2 bg-white rounded-full p-2 shadow-lg hover:bg-gray-100"
-                                                                >
-                                                                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
-                                                                    </svg>
-                                                                </button>
-                                                                <button 
-                                                                    @click="next"
-                                                                    class="absolute right-2 top-1/2 -translate-y-1/2 bg-white rounded-full p-2 shadow-lg hover:bg-gray-100"
-                                                                >
-                                                                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
-                                                                    </svg>
-                                                                </button>
-                                                            </div>
-
-                                                            <!-- Image Counter -->
-                                                            <div class="text-center mt-2">
-                                                                <span x-text="currentIndex + 1"></span> / <span x-text="images.length"></span>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                                HTML;
-
-                                                return new HtmlString($html);
-                                            }),
-                                    ]),
-                            ])
-                            ->columnSpan(1),
+                                TextEntry::make('plateCode1')
+                                    ->label('Kennzeichen 1'),
+                                TextEntry::make('plateCode2')
+                                    ->label('Kennzeichen 2'),
+                                TextEntry::make('plateCode3')
+                                    ->label('Kennzeichen 3'),
+                            ]),
+                    ]),
+                Section::make('Mandant')
+                    ->schema([
+                        Grid::make(2)
+                            ->schema([
+                                TextEntry::make('companyname')
+                                    ->label('Firmenname'),
+                                TextEntry::make('firstname')
+                                    ->label('Vorname'),
+                                TextEntry::make('lastname')
+                                    ->label('Nachname'),
+                                TextEntry::make('email')
+                                    ->label('E-Mail'),
+                            ]),
                     ]),
             ]);
     }

@@ -63,12 +63,36 @@ class Report extends Model
         'createdAt',
         'addressId',
         'status_changed_at',
+        'paymentstatus',
+        'adminemailsent',
+        'paidkba',
+        'uefileuploadedat',
+        'halterdatum',
+        'halterName',
+        'halterStrasse',
+        'halterPLZ',
+        'halterOrt',
+        'lat',
+        'lng',
+        'street',
+        'zip',
+        'city',
+        'client_id',
+        'warning_sent_at',
     ];
 
     protected $casts = [
+        'paymentstatus' => 'boolean',
+        'adminemailsent' => 'boolean',
+        'paidkba' => 'boolean',
+        'status_changed_at' => 'datetime',
+        'uefileuploadedat' => 'datetime',
+        'halterdatum' => 'date',
+        'lat' => 'float',
+        'lng' => 'float',
         'createdAt' => 'datetime',
         'updatedAt' => 'datetime',
-        'status_changed_at' => 'datetime',
+        'warning_sent_at' => 'datetime',
     ];
 
     protected $appends = [
@@ -82,16 +106,19 @@ class Report extends Model
         'updatedAt',
         'deleted_at',
         'status_changed_at',
+        'date',
+        'uefileuploadedat',
+        'halterdatum'
     ];
 
-    public function getFullPlateCodeAttribute()
+    public function getFullPlateCodeAttribute(): string
     {
         return implode('-', array_filter([$this->plateCode1, $this->plateCode2, $this->plateCode3]));
     }
 
     public function getStatusLabelAttribute(): string
     {
-        return "Status {$this->status}";
+        return self::STATUS_LABELS[$this->status] ?? "Unbekannt ({$this->status})";
     }
 
     public function getLawyerApprovalStatusLabelAttribute(): string
@@ -116,6 +143,13 @@ class Report extends Model
         static::updating(function ($report) {
             if ($report->isDirty('status')) {
                 $report->status_changed_at = now();
+                
+                // Create status history entry
+                $report->statusHistory()->create([
+                    'old_status' => $report->getOriginal('status'),
+                    'new_status' => $report->status,
+                    'changed_by' => auth()->user()->name ?? 'System',
+                ]);
             }
         });
     }
@@ -133,5 +167,18 @@ class Report extends Model
     public function user()
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function statusHistory()
+    {
+        return $this->hasMany(ReportStatusHistory::class);
+    }
+
+    /**
+     * Get the client that owns the report.
+     */
+    public function client(): BelongsTo
+    {
+        return $this->belongsTo(Client::class, 'client_id');
     }
 }

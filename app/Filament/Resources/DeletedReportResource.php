@@ -92,7 +92,7 @@ class DeletedReportResource extends Resource
                         '19' => 'danger',
                         default => 'gray',
                     })
-                    ->formatStateUsing(fn (Report $record): string => $record->status_label),
+                    ->formatStateUsing(fn (int $state): string => "Status {$state}"),
                 Tables\Columns\TextColumn::make('firstname')
                     ->label('Vorname')
                     ->searchable(),

@@ -2,6 +2,13 @@
 
 namespace App\Providers\Filament;
 
+use App\Filament\Pages\Calendar;
+use App\Filament\Pages\Dashboard;
+use App\Filament\Widgets\DeadlineWidget;
+use App\Filament\Widgets\ReportChart;
+use App\Filament\Widgets\ReportListWidget;
+use App\Filament\Widgets\ReportStats;
+use App\Filament\Widgets\RevenueChart;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
@@ -19,12 +26,6 @@ use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
 use Illuminate\Routing\Middleware\SubstituteBindings;
 use Illuminate\Session\Middleware\StartSession;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
-use App\Filament\Pages\Dashboard;
-use App\Filament\Widgets\ReportStats;
-use App\Filament\Widgets\ReportChart;
-use App\Filament\Widgets\ReportListWidget;
-use App\Filament\Widgets\RevenueChart;
-use App\Filament\Widgets\DeadlineWidget;
 
 class AdminPanelProvider extends PanelProvider
 {
@@ -42,6 +43,7 @@ class AdminPanelProvider extends PanelProvider
             ->discoverPages(in: app_path('Filament/Pages'), for: 'App\\Filament\\Pages')
             ->pages([
                 Dashboard::class,
+                Calendar::class,
             ])
             ->widgets([
                 DeadlineWidget::class,

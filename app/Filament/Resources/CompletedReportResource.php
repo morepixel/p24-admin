@@ -20,9 +20,11 @@ class CompletedReportResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-document-check';
     
-    protected static ?string $navigationLabel = 'Neuer Vorgang mit Vollmacht (2)';
+    protected static ?string $navigationLabel = 'Neue Vorgänge mit Vollmacht (2)';
     
     protected static ?string $modelLabel = 'Neuer Vorgang mit Vollmacht';
+    
+    protected static ?string $pluralModelLabel = 'Neue Vorgänge mit Vollmacht';
     
     protected static ?int $navigationSort = 3;
 
@@ -117,7 +119,7 @@ class CompletedReportResource extends Resource
                         '19' => 'danger',
                         default => 'gray',
                     })
-                    ->formatStateUsing(fn (Report $record): string => $record->status_label),
+                    ->formatStateUsing(fn (int $state): string => "Status {$state}"),
                 Tables\Columns\TextColumn::make('firstname')
                     ->label('Vorname')
                     ->searchable(),
