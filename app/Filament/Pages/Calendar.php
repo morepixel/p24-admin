@@ -14,6 +14,12 @@ use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
 use Filament\Tables\Actions\Action;
+use App\Filament\Resources\ReportResource;
+use App\Filament\Resources\HolderInquirySentReportResource;
+use App\Filament\Resources\HolderInquiryReceivedReportResource;
+use App\Filament\Resources\InProgressReportResource;
+use App\Filament\Resources\CompletedReportResource;
+use App\Filament\Resources\CanceledReportResource;
 
 class Calendar extends Page implements Tables\Contracts\HasTable
 {
@@ -63,7 +69,9 @@ class Calendar extends Page implements Tables\Contracts\HasTable
                 'createdAt',
                 'updatedAt',
                 'uefileuploadedat',
-                'warning_sent_at'
+                'warning_sent_at',
+                'reminder_due_at',
+                'reminder_sent_at'
             ])
             ->where(function ($query) use ($startAbmahnung, $endAbmahnung, $startMahnung, $endMahnung, $now) {
                 // Abmahnungen zwischen 3 und 4 Wochen alt
@@ -139,6 +147,14 @@ class Calendar extends Page implements Tables\Contracts\HasTable
                     ->label('Post Abmahnung')
                     ->date('d.m.Y')
                     ->sortable(),
+                Tables\Columns\TextColumn::make('reminder_due_at')
+                    ->label('Termin Mahnung')
+                    ->date('d.m.Y')
+                    ->sortable(),
+                Tables\Columns\TextColumn::make('reminder_sent_at')
+                    ->label('Post Mahnung')
+                    ->date('d.m.Y')
+                    ->sortable(),
                 Tables\Columns\CheckboxColumn::make('has_ue')
                     ->label('Post UE')
                     ->sortable()
@@ -163,27 +179,47 @@ class Calendar extends Page implements Tables\Contracts\HasTable
                         $record->warning_sent_at = $data['warning_sent_at'];
                         $record->save();
                     }),
+                Action::make('setReminderDueDate')
+                    ->label('Termin Mahnung')
+                    ->icon('heroicon-m-calendar')
+                    ->form([
+                        DatePicker::make('reminder_due_at')
+                            ->label('Termin Mahnung')
+                            ->format('Y-m-d')
+                            ->displayFormat('d.m.Y')
+                            ->default(fn ($record) => $record->reminder_due_at),
+                    ])
+                    ->action(function (Report $record, array $data): void {
+                        $record->reminder_due_at = $data['reminder_due_at'];
+                        $record->save();
+                    }),
+                Action::make('setReminderSentDate')
+                    ->label('Post Mahnung')
+                    ->icon('heroicon-m-calendar')
+                    ->form([
+                        DatePicker::make('reminder_sent_at')
+                            ->label('Post Mahnung')
+                            ->format('Y-m-d')
+                            ->displayFormat('d.m.Y')
+                            ->default(fn ($record) => $record->reminder_sent_at),
+                    ])
+                    ->action(function (Report $record, array $data): void {
+                        $record->reminder_sent_at = $data['reminder_sent_at'];
+                        $record->save();
+                    }),
                 Tables\Actions\Action::make('edit')
                     ->label('Bearbeiten')
                     ->icon('heroicon-m-pencil-square')
-                    ->form([
-                        Forms\Components\DatePicker::make('warning_sent_at')
-                            ->label('Post Abmahnung')
-                            ->format('Y-m-d')
-                            ->displayFormat('d.m.Y'),
-                        Forms\Components\Toggle::make('has_ue')
-                            ->label('Post UE')
-                            ->onIcon('heroicon-m-check')
-                            ->offIcon('heroicon-m-x-mark')
-                            ->afterStateUpdated(function ($record, $state) {
-                                $record->uefileuploadedat = $state ? now() : null;
-                            }),
-                    ])
-                    ->action(function (Report $record, array $data): void {
-                        $record->warning_sent_at = $data['warning_sent_at'];
-                        $record->uefileuploadedat = $data['has_ue'] ? now() : null;
-                        $record->save();
-                    })
+                    ->url(function (Report $record): string {
+                        return match ($record->status) {
+                            3 => HolderInquirySentReportResource::getUrl('edit', ['record' => $record]),
+                            4 => HolderInquiryReceivedReportResource::getUrl('edit', ['record' => $record]),
+                            1 => InProgressReportResource::getUrl('edit', ['record' => $record]),
+                            2 => CompletedReportResource::getUrl('edit', ['record' => $record]),
+                            18 => CanceledReportResource::getUrl('edit', ['record' => $record]),
+                            default => ReportResource::getUrl('edit', ['record' => $record]),
+                        };
+                    }),
             ]);
     }
 

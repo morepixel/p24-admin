@@ -79,6 +79,8 @@ class Report extends Model
         'city',
         'client_id',
         'warning_sent_at',
+        'reminder_due_at',
+        'reminder_sent_at',
     ];
 
     protected $casts = [
@@ -93,6 +95,8 @@ class Report extends Model
         'createdAt' => 'datetime',
         'updatedAt' => 'datetime',
         'warning_sent_at' => 'datetime',
+        'reminder_due_at' => 'datetime',
+        'reminder_sent_at' => 'datetime',
     ];
 
     protected $appends = [
